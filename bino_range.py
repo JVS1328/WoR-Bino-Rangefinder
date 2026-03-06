@@ -1,6 +1,6 @@
 """
 War of Rights — Binocular Range Estimator
-Hotkey: LALT + SHIFT
+Hotkey: RIGHT CLICK + LALT + SHIFT
   • First press  → starts listening for scroll wheel clicks
   • Second press → freezes display and shows estimated range
   • Third press  → resets back to idle
@@ -42,6 +42,7 @@ class RangeEstimator:
         self.state  = self.IDLE
         self.clicks = 0
         self.keys_held: set = set()
+        self.right_button_held = False
 
         self._build_gui()
         self._start_listeners()
@@ -78,12 +79,16 @@ class RangeEstimator:
         self.lbl_range.pack(**pad)
 
         self.lbl_hint = tk.Label(
-            self.root, text="LALT+SHIFT to start",
+            self.root, text="RMB+LALT+SHIFT to start",
             font=("Courier New", 9), fg="#444", bg="#1a1a1a"
         )
         self.lbl_hint.pack(pady=(0, 8))
 
     # ── State machine ─────────────────────────────────────────────────────────
+    def _check_hotkey(self):
+        """Check if all hotkey components are active"""
+        return HOTKEY.issubset(self.keys_held) and self.right_button_held
+
     def _advance(self):
         if self.state == self.IDLE:
             self.clicks = 0
@@ -103,20 +108,20 @@ class RangeEstimator:
             self.lbl_state.config(text="IDLE",    fg="#555")
             self.lbl_clicks.config(text="Clicks: 0", fg="#aaa")
             self.lbl_range.config(text="—",       fg="#c8a96e")
-            self.lbl_hint.config(text="LALT+SHIFT to start")
+            self.lbl_hint.config(text="RMB+LALT+SHIFT to start")
 
         elif self.state == self.LISTEN:
             self.lbl_state.config(text="● TRACKING", fg="#4caf50")
             self.lbl_clicks.config(text=f"Clicks: {self.clicks}", fg="#eee")
             r = range_label(self.clicks) if self.clicks else "scroll now…"
             self.lbl_range.config(text=r, fg="#c8a96e")
-            self.lbl_hint.config(text="LALT+SHIFT to lock range")
+            self.lbl_hint.config(text="RMB+LALT+SHIFT to lock range")
 
         else:  # RESULT
             self.lbl_state.config(text="LOCKED",  fg="#e57373")
             self.lbl_clicks.config(text=f"Clicks: {self.clicks}", fg="#eee")
             self.lbl_range.config(text=range_label(self.clicks), fg="#ffd54f")
-            self.lbl_hint.config(text="LALT+SHIFT to reset")
+            self.lbl_hint.config(text="RMB+LALT+SHIFT to reset")
 
     # ── Input listeners ───────────────────────────────────────────────────────
     def _start_listeners(self):
@@ -126,7 +131,7 @@ class RangeEstimator:
     def _kb_listener(self):
         def on_press(key):
             self.keys_held.add(key)
-            if HOTKEY.issubset(self.keys_held):
+            if self._check_hotkey():
                 self._advance()
 
         def on_release(key):
@@ -137,12 +142,18 @@ class RangeEstimator:
         listener.join()
 
     def _mouse_listener(self):
+        def on_click(x, y, button, pressed):
+            if button == mouse.Button.right:
+                self.right_button_held = pressed
+                if pressed and self._check_hotkey():
+                    self._advance()
+
         def on_scroll(x, y, dx, dy):
             if self.state == self.LISTEN:
                 self.clicks = max(0, self.clicks + dy)
                 self._refresh()
 
-        with mouse.Listener(on_scroll=on_scroll):
+        with mouse.Listener(on_click=on_click, on_scroll=on_scroll):
             import time
             while True:
                 time.sleep(1)
