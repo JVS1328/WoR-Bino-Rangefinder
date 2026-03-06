@@ -1,6 +1,6 @@
 """
 War of Rights — Binocular Range Estimator
-Hotkey: SHIFT + CAPS LOCK
+Hotkey: LALT + SHIFT
   • First press  → starts listening for scroll wheel clicks
   • Second press → freezes display and shows estimated range
   • Third press  → resets back to idle
@@ -17,7 +17,7 @@ A, B = 13.0253, 1.18761          # f(x) = A * B^x  (from Desmos export)
 # Confirmed reference points (clicks → yards)
 CONFIRMED = {12: 100, 16: 200, 18: 300, 20: 400}
 
-HOTKEY = {keyboard.Key.shift, keyboard.Key.caps_lock}
+HOTKEY = {keyboard.Key.shift, keyboard.Key.alt_l}
 
 # ── Range calculation ─────────────────────────────────────────────────────────
 def estimate_range(clicks: int) -> int:
@@ -78,7 +78,7 @@ class RangeEstimator:
         self.lbl_range.pack(**pad)
 
         self.lbl_hint = tk.Label(
-            self.root, text="SHIFT+CAPS to start",
+            self.root, text="LALT+SHIFT to start",
             font=("Courier New", 9), fg="#444", bg="#1a1a1a"
         )
         self.lbl_hint.pack(pady=(0, 8))
@@ -103,20 +103,20 @@ class RangeEstimator:
             self.lbl_state.config(text="IDLE",    fg="#555")
             self.lbl_clicks.config(text="Clicks: 0", fg="#aaa")
             self.lbl_range.config(text="—",       fg="#c8a96e")
-            self.lbl_hint.config(text="SHIFT+CAPS to start")
+            self.lbl_hint.config(text="LALT+SHIFT to start")
 
         elif self.state == self.LISTEN:
             self.lbl_state.config(text="● TRACKING", fg="#4caf50")
             self.lbl_clicks.config(text=f"Clicks: {self.clicks}", fg="#eee")
             r = range_label(self.clicks) if self.clicks else "scroll now…"
             self.lbl_range.config(text=r, fg="#c8a96e")
-            self.lbl_hint.config(text="SHIFT+CAPS to lock range")
+            self.lbl_hint.config(text="LALT+SHIFT to lock range")
 
         else:  # RESULT
             self.lbl_state.config(text="LOCKED",  fg="#e57373")
             self.lbl_clicks.config(text=f"Clicks: {self.clicks}", fg="#eee")
             self.lbl_range.config(text=range_label(self.clicks), fg="#ffd54f")
-            self.lbl_hint.config(text="SHIFT+CAPS to reset")
+            self.lbl_hint.config(text="LALT+SHIFT to reset")
 
     # ── Input listeners ───────────────────────────────────────────────────────
     def _start_listeners(self):
